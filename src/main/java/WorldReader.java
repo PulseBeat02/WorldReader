@@ -2,6 +2,7 @@ import net.querz.mca.Chunk;
 import net.querz.mca.MCAFile;
 import net.querz.mca.MCAUtil;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -20,29 +21,39 @@ public class WorldReader {
         Set<ChunkCoordinate> coords = new HashSet<>();
         for (File f : Objects.requireNonNull(folder.listFiles())) {
             printMCAFile(f);
-            MCAFile file = MCAUtil.read(f);
-            for (int chunkX = 0; chunkX <= 31; chunkX++) {
-                for (int chunkZ = 0; chunkZ <= 31; chunkZ++) {
-                    Chunk c = file.getChunk(chunkX, chunkZ);
-                    outer: for (int x = 0; x < 16; ++x) {
-                        for (int y = 0; y < 256; ++y) {
-                            for (int z = 0; z < 16; ++z) {
-                                String tag;
-                                try {
-                                    tag = c.getBlockStateAt(x, y, z).toString();
-                                } catch (final NullPointerException exception) {
-                                    break outer;
-                                }
-                                if (tag.contains("minecraft:music_disc_pigstep")) {
-                                    coords.add(new ChunkCoordinate(f.getName(), x, y, z, chunkX, chunkZ));
+            try {
+                MCAFile file = MCAUtil.read(f);
+                for (int chunkX = 0; chunkX <= 31; chunkX++) {
+                    for (int chunkZ = 0; chunkZ <= 31; chunkZ++) {
+                        Chunk c = file.getChunk(chunkX, chunkZ);
+                        for (int x = 0; x < 16; ++x) {
+                            for (int y = 0; y < 256; ++y) {
+                                for (int z = 0; z < 16; ++z) {
+                                    String tag;
+                                    try {
+                                        tag = c.getBlockStateAt(x, y, z).toString();
+                                    } catch (final NullPointerException exception) {
+                                        continue;
+                                    }
+                                    if (tag.contains("minecraft:music_disc_pigstep")) {
+                                        coords.add(new ChunkCoordinate(f.getName(), x, y, z, chunkX, chunkZ));
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            } catch (final EOFException ignored) {
+                printEmptyMCAFile(f);
             }
         }
         return coords;
+    }
+
+    private static void printEmptyMCAFile(final File f) {
+        System.out.println("====================================");
+        System.out.println("FILE NAME: " + f.getName() + " IS EMPTY! IGNORING IT");
+        System.out.println("====================================");
     }
 
     private static void printMCAFile(final File f) {
