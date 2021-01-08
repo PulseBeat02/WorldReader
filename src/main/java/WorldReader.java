@@ -6,9 +6,11 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WorldReader {
 
@@ -19,7 +21,8 @@ public class WorldReader {
 
     private static Set<ChunkCoordinate> readWorldData(final File folder) throws IOException {
         Set<ChunkCoordinate> coords = new HashSet<>();
-        for (File f : Objects.requireNonNull(folder.listFiles())) {
+        for (File f : Arrays.stream(Objects.requireNonNull(folder.listFiles())).filter(s -> s.toString().endsWith(".mca"))
+                .sorted().collect(Collectors.toList())) {
             printMCAFile(f);
             try {
                 MCAFile file = MCAUtil.read(f);
