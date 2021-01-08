@@ -4,6 +4,7 @@ import net.querz.mca.MCAUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -11,6 +12,7 @@ import java.util.Set;
 public class WorldReader {
 
     public static void main(String[] args) throws IOException {
+        System.setOut(new PrintStream("results.txt"));
         printPigstepCoordinates(readWorldData(new File("world/region")));
     }
 
@@ -32,12 +34,11 @@ public class WorldReader {
                                     break outer;
                                 }
                                 if (tag.contains("minecraft:music_disc_pigstep")) {
-                                    coords.add(new ChunkCoordinate(x, y, z));
+                                    coords.add(new ChunkCoordinate(f.getName(), x, y, z, chunkX, chunkZ));
                                 }
                             }
                         }
                     }
-                    logChunkCoordinate(chunkX, chunkZ);
                 }
             }
         }
@@ -50,29 +51,34 @@ public class WorldReader {
         System.out.println("====================================");
     }
 
-    private static void logChunkCoordinate(final int x, final int z) {
-        System.out.println("[" + x + "," + z + "]");
-    }
-
-    private static void printPigstepCoordinates(Set<ChunkCoordinate> coordinates) {
+    private static void printPigstepCoordinates(final Set<ChunkCoordinate> coordinates) {
         System.out.println("====================================");
         System.out.println("               RESULTS              ");
-        System.out.println("====================================");
         for (ChunkCoordinate c : coordinates) {
-            System.out.println("[" + c.X() + "," + c.Y() + "," + c.Z() + "]");
+            System.out.println("====================================");
+            System.out.println("FILE: " + c.getFileName());
+            System.out.println("CHUNK COORDINATE: " + "[" + c.getChunkX() + "," + c.getChunkZ() + "]");
+            System.out.println("COORDINATE" + "[" + c.X() + "," + c.Y() + "," + c.Z() + "]");
         }
+        System.out.println("====================================");
     }
 
     private static class ChunkCoordinate {
 
+        private final String fileName;
         private final int x;
         private final int y;
         private final int z;
+        private final int chunkX;
+        private final int chunkZ;
 
-        public ChunkCoordinate(final int x, final int y, final int z) {
+        public ChunkCoordinate(final String name, final int x, final int y, final int z, final int chunkX, final int chunkZ) {
+            this.fileName = name;
             this.x = x;
             this.y = y;
             this.z = z;
+            this.chunkX = chunkX;
+            this.chunkZ = chunkZ;
         }
 
         public int X() {
@@ -85,6 +91,18 @@ public class WorldReader {
 
         public int Z() {
             return z;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public int getChunkX() {
+            return chunkX;
+        }
+
+        public int getChunkZ() {
+            return chunkZ;
         }
 
     }
