@@ -1,6 +1,9 @@
 import net.querz.mca.Chunk;
 import net.querz.mca.MCAFile;
 import net.querz.mca.MCAUtil;
+import net.querz.nbt.io.NBTUtil;
+import net.querz.nbt.tag.CompoundTag;
+import net.querz.nbt.tag.Tag;
 
 import java.io.EOFException;
 import java.io.File;
@@ -17,6 +20,7 @@ public class WorldReader {
     public static void main(String[] args) throws IOException {
         System.setOut(new PrintStream("results.txt"));
         printPigstepCoordinates(readWorldData(new File("world/region")));
+        printPlayerData(readPlayerData(new File("world/playerdata")));
     }
 
     private static Set<ChunkCoordinate> readWorldData(final File folder) throws IOException {
@@ -29,21 +33,13 @@ public class WorldReader {
                 for (int chunkX = 0; chunkX <= 31; chunkX++) {
                     for (int chunkZ = 0; chunkZ <= 31; chunkZ++) {
                         Chunk c = file.getChunk(chunkX, chunkZ);
-                        for (int x = 0; x < 16; ++x) {
-                            for (int y = 0; y < 256; ++y) {
-                                for (int z = 0; z < 16; ++z) {
-                                    String tag;
-                                    try {
-                                        tag = c.getBlockStateAt(x, y, z).toString();
-                                    } catch (final NullPointerException exception) {
-                                        continue;
-                                    }
-                                    if (tag.contains("minecraft:music_disc_pigstep")) {
-                                        coords.add(new ChunkCoordinate(f.getName(), x, y, z, chunkX, chunkZ));
-                                    }
+                        try {
+                            for (CompoundTag tag : c.getTileEntities()) {
+                                if (tag.toString().contains("minecraft:music_disc_pigstep")) {
+                                    System.out.println(tag);
                                 }
                             }
-                        }
+                        } catch (final NullPointerException ignored) {}
                     }
                 }
             } catch (final EOFException ignored) {
@@ -51,6 +47,19 @@ public class WorldReader {
             }
         }
         return coords;
+    }
+
+    private static Set<String> readPlayerData(final File folder) throws IOException {
+        Set<String> data = new HashSet<>();
+        for (File f : Arrays.stream(Objects.requireNonNull(folder.listFiles())).filter(s -> s.toString().endsWith(".dat"))
+                .sorted().collect(Collectors.toList())) {
+            Tag<?> tag = NBTUtil.read(f).getTag();
+            if (tag.toString().contains("minecraft:music_disc_pigstep")) {
+                String name = f.getName();
+                data.add(name.substring(0, name.length() - 4));
+            }
+        }
+        return data;
     }
 
     private static void printEmptyMCAFile(final File f) {
@@ -65,9 +74,15 @@ public class WorldReader {
         System.out.println("====================================");
     }
 
+    private static void printPlayerData(final Set<String> sets) {
+        for (String str : sets) {
+            System.out.println(str);
+        }
+    }
+
     private static void printPigstepCoordinates(final Set<ChunkCoordinate> coordinates) {
         System.out.println("====================================");
-        System.out.println("               RESULTS              ");
+        System.out.println("              RESULTS               ");
         for (ChunkCoordinate c : coordinates) {
             System.out.println("====================================");
             System.out.println("FILE: " + c.getFileName());

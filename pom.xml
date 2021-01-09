@@ -25,6 +25,11 @@
             <artifactId>NBT</artifactId>
             <version>5.5</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20201115</version>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
